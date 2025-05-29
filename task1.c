@@ -1,5 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 
 char debug_mode = 0;
 char file_name[128];
@@ -25,6 +28,20 @@ void setFileName()
 {
     printf("Enter file name:\n");
     fgets(file_name, 101, stdin);
+    int i=0;
+    while (i<128)
+    {
+        if (file_name[i] == '\n')
+        {
+            file_name[i] = '\0';
+        }
+        if(file_name[i] == '\0')
+        {
+            i = 130;
+        }
+        i++;
+
+    }
     if (debug_mode)
     {
         printf("DEBUG : read file name - %s\n", file_name);
@@ -54,9 +71,48 @@ void setUnitSize()
 
 
 }
+
 void ldIntoMem()
 {
-    printf("NYI: load into memoryn\n");
+    int err = 0; // error checker
+    char* buffer; //Str got from user
+    char* second; //second number from input
+    long loc = 0;
+    long len = 0;
+
+    if(file_name[0] == '\0')
+    {
+        printf("ERROR : No file name set\n");
+    }
+    else
+    {
+        err = open(file_name,O_RDWR);
+        if(err == -1)
+        {
+            printf("ERROR : error while opening file %s\n",file_name);
+            perror("err code");
+        }
+        else
+        {
+            printf("Please enter <location> <length>\n");
+            buffer = malloc(128);
+            buffer = fgets(buffer,128,stdin);
+            loc = strtol(buffer,&second,16);
+            len = strtol(second, NULL, 10);
+            if(debug_mode)
+            {
+                fprintf(stderr, "Filename: %s\nlocation: %lX\nlength: %ld\n",file_name,loc,len);
+            }
+
+            lseek(err,loc,SEEK_SET);
+            read(err, mem_buf,unit_size*len);
+
+            printf("read %ld bytes from memory\n",len*unit_size);
+            lseek(err,0,SEEK_SET);
+
+
+        }
+    }
 }
 
 void tglDispMode()
@@ -126,6 +182,9 @@ int main(int argc, char **argv)
 {
     char *buffer = malloc(128);
     int choosen;
+
+    file_name[0] = '\0';
+
     makeMenu();
     printf("choose option:\n");
     for (int i = 0; i <= 8; i++)
