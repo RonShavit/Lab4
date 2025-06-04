@@ -23,7 +23,7 @@ typedef struct menu_option
 } menu_option;
 
 menu_option *menu[9];
-char *names[9] = {"toggle debug mode", "set file name", "set unit size", "load into memory", "toggle display mode", "memory display", "save info file", "memory modify", "quit"};
+char *names[9] = {"toggle debug mode", "set file name", "set unit size", "load into memory", "toggle display mode", "memory display", "save into file", "memory modify", "quit"};
 
 void tglDebugMode()
 {
@@ -126,20 +126,14 @@ void ldIntoMem()
                 fprintf(stderr, "Filename: %s\nlocation: %lX\nlength: %ld\n", file_name, loc, len);
             }
 
-            if (loc < len)
-            {
-                lseek(err, loc, SEEK_SET);
-                readNum = read(err, mem_buf, unit_size * len);
-                printf("%s\n", mem_buf);
+            lseek(err, loc, SEEK_SET);
+            readNum = read(err, mem_buf, unit_size * len);
+            printf("%s\n", mem_buf);
 
-                printf("read %d bytes from memory\n", readNum);
-                mem_buf_size = readNum;
-                lseek(err, 0, SEEK_SET);
-            }
-            else
-            {
-                printf("ERROR : Address 0x%lX is out of bound for file %s (0-0x%lX)\n", loc, file_name, filesize);
-            }
+            printf("read %d bytes from memory\n", readNum);
+            mem_buf_size = readNum;
+            lseek(err, 0, SEEK_SET);
+
             close(err);
         }
     }
@@ -223,7 +217,7 @@ void memDisplay()
     }
 }
 
-void saveInfoFile()
+void saveIntoFile()
 {
     int source = 0;
     int tar = 0;
@@ -241,30 +235,23 @@ void saveInfoFile()
     }
     else
     {
-        if (filesize <= source)
+
+        if (source != 0)
         {
-            printf("ERROR : Source address 0x%X is out of bound for file %s (0-0x%lX)\n", source, file_name, filesize);
+            rwbuff = (char*)source;
+            printf("%c\n",*rwbuff);
+            /*lseek(ope, tar, SEEK_SET);
+            written = write(ope, rwbuff, len);
+            printf("written %s\n", rwbuff);
+            lseek(ope, 0, SEEK_SET);*/
         }
         else
         {
-            if (source != 0)
-            {
-                rwbuff = malloc(len * unit_size);
-                int rSize = read(ope, rwbuff, len * unit_size);
-                lseek(ope, tar, SEEK_SET);
-                written = write(ope, rwbuff, rSize);
-                printf("written %s\n", rwbuff);
-                free(rwbuff);
-                lseek(ope, 0, SEEK_SET);
-            }
-            else
-            {
-                lseek(ope, tar, SEEK_SET);
-                written = write(ope, mem_buf, MIN(len * unit_size, mem_buf_size));
-                printf("written %s fom mem\n", mem_buf);
-                lseek(ope, 0, SEEK_SET);
-            }
+            lseek(ope, tar, SEEK_SET);
+            written = write(ope, mem_buf, MIN(len * unit_size, mem_buf_size));
+            lseek(ope, 0, SEEK_SET);
         }
+
         close(ope);
     }
 }
@@ -277,7 +264,7 @@ void memModify()
     printf("Please enter <location> <val>\n");
     fgets(input, 128, stdin);
     sscanf(input, "%x %x", &loc, &val);
-    if(loc+unit_size<10000)
+    if (loc + unit_size < 10000)
     {
         for (int i = unit_size; i > 0; i--)
         {
@@ -298,7 +285,7 @@ void quit()
     exit(0);
 }
 
-void *functions[9] = {tglDebugMode, setFileName, setUnitSize, ldIntoMem, tglDispMode, memDisplay, saveInfoFile, memModify, quit};
+void *functions[9] = {tglDebugMode, setFileName, setUnitSize, ldIntoMem, tglDispMode, memDisplay, saveIntoFile, memModify, quit};
 
 void makeMenu()
 {

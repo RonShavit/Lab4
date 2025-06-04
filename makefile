@@ -3,3 +3,9 @@ task1:
 
 clean1:
 	rm task1
+
+task4:
+	gcc -g -Wall -m32 -fno-pie -fno-stack-protector -o digit_counter task4.c
+
+clean4:
+	rm digit_counter
